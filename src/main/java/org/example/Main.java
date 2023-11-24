@@ -1,29 +1,42 @@
 package org.example;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintWriter;
+import java.io.*;
+import java.net.URL;
+import java.net.URLConnection;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) throws IOException {
-        //Запись в файл
-        InputStream stream = new FileInputStream("addText.txt");
-        Scanner scanner = new Scanner(stream);
-        int x = scanner.nextInt();
-        char op = scanner.next().charAt(0);
-        int y = scanner.nextInt();
-        PrintWriter writer = new PrintWriter("outText.txt");
-
-        if(op == '*'){
-            writer.println("Result");
-            writer.println("is ...");
-            writer.println(x * y);
-            System.out.println(x * y);
+    String page = downloadWebPage("https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY");
+      //  System.out.println(page);
+        int urlBegin = page.lastIndexOf("url");
+        int urlEnd = page.lastIndexOf("}");
+        String url = page.substring(urlBegin +6, urlEnd-1);
+        try(InputStream in = new URL(url).openStream()){
+            Files.copy(in, Paths.get("new_image.jpg"));
         }
-        writer.close();
+        System.out.println("Picture saved");
 
+        int explanationBegin = page.lastIndexOf("explanation");
+        int explanationEnd = page.lastIndexOf("hdurl");
+        String explanation = page.substring(explanationBegin +13, explanationEnd -2);
+        System.out.println(explanation);
+    }
+
+    private static String downloadWebPage(String url) throws IOException {
+        StringBuilder result = new StringBuilder();
+        String line;
+        URLConnection urlConnection = new URL(url).openConnection();
+        try (
+            InputStream is = urlConnection.getInputStream();
+            BufferedReader br = new BufferedReader(new InputStreamReader(is))){
+                while ((line = br.readLine()) != null){
+                result.append(line);
+                        }
+        }
+        return result.toString();
     }
 }
 
